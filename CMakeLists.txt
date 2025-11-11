@@ -19,6 +19,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 # find_package(your_custom_msg_interface REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV 4.2 REQUIRED)
@@ -51,6 +52,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclpy
   std_msgs
   sensor_msgs
+  nav_msgs
   # your_custom_msg_interface
   cv_bridge
   image_transport
@@ -157,12 +159,22 @@ add_executable(mono_node_cpp
   src/common.cpp
 )
 
+# Add executable
+add_executable(stereo_inertial_cpp
+  src/stereo_inertial.cpp
+)
+
 ament_target_dependencies(mono_node_cpp
+  PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
+)
+
+ament_target_dependencies(stereo_inertial_cpp
   PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 target_link_libraries(mono_node_cpp PUBLIC orb_slam3_lib) # Link a node with the internal shared library
 
+target_link_libraries(stereo_inertial_cpp PUBLIC orb_slam3_lib)
 
 # Install all the header files in package/package/include
 install (DIRECTORY include/ 
@@ -171,6 +183,13 @@ install (DIRECTORY include/
 
 # Install our node and library
 install(TARGETS mono_node_cpp orb_slam3_lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+  INCLUDES DESTINATION include/${PROJECT_NAME}
+)
+
+install(TARGETS stereo_inertial_cpp orb_slam3_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
@@ -196,6 +215,13 @@ install(PROGRAMS
   scripts/mono_driver_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+# Install launch files
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 
 
 ament_package()

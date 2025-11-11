@@ -1,0 +1,106 @@
+%YAML:1.0
+File.version: "1.0"
+
+#--------------------------------------------------------------------------------------------
+# Camera Model
+#--------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------
+# Camera Model (PinHole, No Distortion)
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole"
+
+# Left Camera (C1)
+Camera1.fx: 539.93633270263672
+Camera1.fy: 539.93637084960938
+Camera1.cx: 640.0
+Camera1.cy: 480.0
+
+Camera1.k1: 0.0
+Camera1.k2: 0.0
+Camera1.p1: 0.0
+Camera1.p2: 0.0
+Camera1.k3: 0.0
+
+# Right Camera (C2) — identical model
+Camera2.fx: 539.93633270263672
+Camera2.fy: 539.93637084960938
+Camera2.cx: 640.0
+Camera2.cy: 480.0
+
+Camera2.k1: 0.0
+Camera2.k2: 0.0
+Camera2.p1: 0.0
+Camera2.p2: 0.0
+Camera2.k3: 0.0
+
+# Image Size
+Camera.width: 1280
+Camera.height: 960
+
+# Framerate
+Camera.fps: 20
+Camera.RGB: 1
+
+# Stereo depth scaling
+Stereo.ThDepth: 40.0
+
+
+# Camera resolution
+Camera.width: 512
+Camera.height: 512
+Camera.fps: 20
+Camera.RGB: 1
+
+# Stereo extrinsics (T_c1_c2)  Camera2 pose in Camera1 frame
+Stereo.T_c1_c2: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [ 0.999999445773493, 0.000791687752817, 0.000694034010224, 0.101063427414194,
+         -0.000823363992158, 0.998899461915674, 0.046895490788700, 0.001946204678584,
+         -0.000656143613644, -0.046896036240590, 0.998899560146304, 0.001015350132563,
+          0.0, 0.0, 0.0, 1.0 ]
+
+Stereo.ThDepth: 40.0
+
+#--------------------------------------------------------------------------------------------
+# IMU Parameters
+#--------------------------------------------------------------------------------------------
+IMU.T_b_c1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: f
+  data: [ -0.99994, -0.00299325, 0.0105676, 0.0107000041753054,
+           0.0029806, -0.999995, -0.00121326, 0.0,
+           0.0105711, -0.00118169, 0.999943, 0.0,
+           0.0, 0.0, 0.0, 1.0 ]
+
+IMU.InsertKFsWhenLost: 0
+IMU.NoiseGyro: 0.000005148030141
+IMU.NoiseAcc: 0.000066952452471
+IMU.GyroWalk: 0.000000499999999
+IMU.AccWalk: 0.000099999997474
+IMU.Frequency: 200.0
+
+#--------------------------------------------------------------------------------------------
+# ORB Feature Parameters
+#--------------------------------------------------------------------------------------------
+ORBextractor.nFeatures: 1000
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 1.0
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.05
+Viewer.CameraLineWidth: 2.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -10.0
+Viewer.ViewpointZ: -0.1
+Viewer.ViewpointF: 2000.0
