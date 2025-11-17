@@ -152,49 +152,47 @@ set(g2o_PATH "${PROJECT_SOURCE_DIR}/orb_slam3/Thirdparty/g2o/lib/libg2o.so")
 install(FILES ${DBoW2_PATH} DESTINATION lib)
 install(FILES ${g2o_PATH} DESTINATION lib)
 
+###=====================
+## Stereo Mode
+###=====================
 
-# Add executable
-add_executable(mono_node_cpp
-  src/mono_example.cpp
-  src/common.cpp
-)
-
-# Add executable
+# Add executable 
 add_executable(stereo_inertial_cpp
   src/stereo_inertial.cpp
-)
-
-ament_target_dependencies(mono_node_cpp
-  PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
 ament_target_dependencies(stereo_inertial_cpp
   PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
-
-target_link_libraries(mono_node_cpp PUBLIC orb_slam3_lib) # Link a node with the internal shared library
-
 target_link_libraries(stereo_inertial_cpp PUBLIC orb_slam3_lib)
+
+
+###=====================
+## Mono Mode
+###=====================
+
+# Add executable 
+add_executable(mono_cpp
+  src/mono.cpp
+)
+
+ament_target_dependencies(mono_cpp
+  PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
+)
+target_link_libraries(mono_cpp PUBLIC orb_slam3_lib)
 
 # Install all the header files in package/package/include
 install (DIRECTORY include/ 
-        DESTINATION include
-)
+        DESTINATION include)
 
 # Install our node and library
-install(TARGETS mono_node_cpp orb_slam3_lib
+install(TARGETS stereo_inertial_cpp mono_cpp orb_slam3_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
   INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
-install(TARGETS stereo_inertial_cpp orb_slam3_lib
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-  INCLUDES DESTINATION include/${PROJECT_NAME}
-)
 
 # Tell downstream packages where to find the headers
 ament_export_include_directories(include)
@@ -209,12 +207,6 @@ ament_export_dependencies(
 # Python node
 # Install Python modules, submodules
 ament_python_install_package(${PROJECT_NAME}) # Install the modules in ros2_orb_slam3/ros2_orb_slam3 folder
-
-# Install Python executibles
-install(PROGRAMS
-  scripts/mono_driver_node.py
-  DESTINATION lib/${PROJECT_NAME}
-)
 
 # Install launch files
 install(

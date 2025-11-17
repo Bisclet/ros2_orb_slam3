@@ -14,7 +14,7 @@ def generate_launch_description():
         "voc_file_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/Vocabulary/ORBvoc.txt.bin"
     )
     settings_file = DeclareLaunchArgument(
-        "settings_file_path_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/config/Monocular/EuRoC.yaml"
+        "settings_file_path_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/config/Monocular/TUM-VI.yaml"
     )
     debug_info = DeclareLaunchArgument(
         "debug_info", default_value="false"

@@ -18,10 +18,16 @@ def generate_launch_description():
         "voc_file_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/Vocabulary/ORBvoc.txt.bin"
     )
     settings_file = DeclareLaunchArgument(
-        "settings_file_path_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/config/Stereo-Inertial/euroc_mav.yaml"
+        "settings_file_path_arg", default_value="/workspaces/cocoro/src/ros2_orb_slam3/orb_slam3/config/Stereo-Inertial/TUM-VI.yaml"
     )
-    debug_sync = DeclareLaunchArgument(
-        "debug_sync", default_value="true"
+    debug_info = DeclareLaunchArgument(
+        "debug_info", default_value="false"
+    )
+    debug_log_path = DeclareLaunchArgument(
+        "debug_log_path", default_value="/workspaces/cocoro/orb_logs"
+    )
+    imu_time_offset = DeclareLaunchArgument(
+        "imu_time_offset", default_value="0.0"
     )
 
     # Launch the node
@@ -37,7 +43,9 @@ def generate_launch_description():
             "odometry_topic": LaunchConfiguration("odometry_topic"),
             "voc_file_arg": LaunchConfiguration("voc_file_arg"),
             "settings_file_path_arg": LaunchConfiguration("settings_file_path_arg"),
-            "debug_sync" : LaunchConfiguration("debug_sync"),
+            "debug_info" : LaunchConfiguration("debug_info"),
+            "debug_log_path" : LaunchConfiguration("debug_log_path"),
+            "imu_time_offset" : LaunchConfiguration("imu_time_offset"),
         }]
     )
 
@@ -48,7 +56,9 @@ def generate_launch_description():
         odom_topic,
         voc_file,
         settings_file,
-        debug_sync,
+        debug_info,
+        debug_log_path,
+        imu_time_offset,
         slam_node,
         
     ])
