@@ -194,8 +194,6 @@ install(TARGETS stereo_inertial_cpp mono_cpp orb_slam3_lib
 )
 
 
-# Tell downstream packages where to find the headers
-ament_export_include_directories(include)
 
 # Help downstream packages to find transitive dependencies
 ament_export_dependencies(
