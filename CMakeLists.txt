@@ -181,16 +181,12 @@ ament_target_dependencies(mono_cpp
 )
 target_link_libraries(mono_cpp PUBLIC orb_slam3_lib)
 
-# Install all the header files in package/package/include
-install (DIRECTORY include/ 
-        DESTINATION include)
 
 # Install our node and library
 install(TARGETS stereo_inertial_cpp mono_cpp orb_slam3_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
-  INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
 
