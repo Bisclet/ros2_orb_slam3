@@ -302,7 +302,7 @@ public:
 
     sensor_type_ = ORB_SLAM3::System::IMU_STEREO;
     slam_ = std::make_unique<ORB_SLAM3::System>(
-        voc_path_.c_str(), settings_path_.c_str(), sensor_type_, true
+        voc_path_.c_str(), settings_path_.c_str(), sensor_type_, debug_info_
     );
 
     RCLCPP_INFO(get_logger(), "Stereo-Inertial SLAM node initialized.");
