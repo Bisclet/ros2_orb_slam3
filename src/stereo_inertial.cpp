@@ -85,7 +85,7 @@ public:
       if (buffer_.empty() || t1 <= t0) return selected;
 
       for (const auto &p : buffer_) {
-        if (p.t >= t0 && p.t <= t1)
+        if (p.t >= t0 && p.t < t1)
           selected.push_back(p);
       }
       return selected;
