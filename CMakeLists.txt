@@ -153,7 +153,7 @@ install(FILES ${DBoW2_PATH} DESTINATION lib)
 install(FILES ${g2o_PATH} DESTINATION lib)
 
 ###=====================
-## Stereo Mode
+## Stereo-Inertial Mode
 ###=====================
 
 # Add executable 
@@ -165,6 +165,20 @@ ament_target_dependencies(stereo_inertial_cpp
   PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 target_link_libraries(stereo_inertial_cpp PUBLIC orb_slam3_lib)
+
+###=====================
+## Mono-Inertial Mode
+###=====================
+
+# Add executable 
+add_executable(mono_inertial_cpp
+  src/mono_inertial.cpp
+)
+
+ament_target_dependencies(mono_inertial_cpp
+  PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
+)
+target_link_libraries(mono_inertial_cpp PUBLIC orb_slam3_lib)
 
 
 ###=====================
@@ -183,7 +197,7 @@ target_link_libraries(mono_cpp PUBLIC orb_slam3_lib)
 
 
 # Install our node and library
-install(TARGETS stereo_inertial_cpp mono_cpp orb_slam3_lib
+install(TARGETS stereo_inertial_cpp mono_cpp mono_inertial_cpp orb_slam3_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
