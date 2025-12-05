@@ -26,6 +26,7 @@ find_package(OpenCV 4.2 REQUIRED)
 find_package(Eigen3 3.3.0 REQUIRED) # Matched with Sophus
 find_package(Pangolin REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(TBB REQUIRED)
 
 
 # Header file locations [C++ node]
@@ -164,7 +165,7 @@ add_executable(stereo_inertial_cpp
 ament_target_dependencies(stereo_inertial_cpp
   PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
-target_link_libraries(stereo_inertial_cpp PUBLIC orb_slam3_lib)
+target_link_libraries(stereo_inertial_cpp PUBLIC orb_slam3_lib TBB::tbb)
 
 ###=====================
 ## Mono-Inertial Mode

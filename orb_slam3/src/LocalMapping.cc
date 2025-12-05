@@ -388,6 +388,10 @@ void LocalMapping::MapPointCulling()
 void LocalMapping::CreateNewMapPoints()
 {
     // Retrieve neighbor keyframes in covisibility graph
+    // Safety check: ensure current keyframe is valid
+    if(!mpCurrentKeyFrame)
+        return;
+
     int nn = 10;
     // For stereo inertial case
     if(mbMonocular)
@@ -437,6 +441,10 @@ void LocalMapping::CreateNewMapPoints()
             return;
 
         KeyFrame* pKF2 = vpNeighKFs[i];
+        
+        // Safety check: ensure neighbor keyframe is valid
+        if(!pKF2)
+            continue;
 
         GeometricCamera* pCamera1 = mpCurrentKeyFrame->mpCamera, *pCamera2 = pKF2->mpCamera;
 
@@ -480,15 +488,33 @@ void LocalMapping::CreateNewMapPoints()
 
         // Triangulate each match
         const int nmatches = vMatchedIndices.size();
+        // Helper to validate a key index for a KeyFrame given its NLeft layout
+        auto validKeyIndex = [&](KeyFrame* kf, int idx)->bool{
+            if(!kf) return false;
+            if(idx < 0) return false;
+            if(kf->NLeft == -1){
+                return idx < (int)kf->mvKeysUn.size() && idx < (int)kf->mvuRight.size();
+            }
+            if(idx < kf->NLeft){
+                return idx < (int)kf->mvKeys.size() && idx < (int)kf->mvuRight.size();
+            }
+            int idxR = idx - kf->NLeft;
+            return idxR >= 0 && idxR < (int)kf->mvKeysRight.size() && idx < (int)kf->mvuRight.size();
+        };
+
         for(int ikp=0; ikp<nmatches; ikp++)
         {
             const int &idx1 = vMatchedIndices[ikp].first;
             const int &idx2 = vMatchedIndices[ikp].second;
 
+            // Bounds checking for array access depending on NLeft
+            if(!validKeyIndex(mpCurrentKeyFrame, idx1) || !validKeyIndex(pKF2, idx2))
+                continue;
+
             const cv::KeyPoint &kp1 = (mpCurrentKeyFrame -> NLeft == -1) ? mpCurrentKeyFrame->mvKeysUn[idx1]
                                                                          : (idx1 < mpCurrentKeyFrame -> NLeft) ? mpCurrentKeyFrame -> mvKeys[idx1]
                                                                                                                : mpCurrentKeyFrame -> mvKeysRight[idx1 - mpCurrentKeyFrame -> NLeft];
-            const float kp1_ur=mpCurrentKeyFrame->mvuRight[idx1];
+            const float kp1_ur = (idx1 < (int)mpCurrentKeyFrame->mvuRight.size()) ? mpCurrentKeyFrame->mvuRight[idx1] : -1.f;
             bool bStereo1 = (!mpCurrentKeyFrame->mpCamera2 && kp1_ur>=0);
             const bool bRight1 = (mpCurrentKeyFrame -> NLeft == -1 || idx1 < mpCurrentKeyFrame -> NLeft) ? false
                                                                                                          : true;
@@ -497,7 +523,7 @@ void LocalMapping::CreateNewMapPoints()
                                                             : (idx2 < pKF2 -> NLeft) ? pKF2 -> mvKeys[idx2]
                                                                                      : pKF2 -> mvKeysRight[idx2 - pKF2 -> NLeft];
 
-            const float kp2_ur = pKF2->mvuRight[idx2];
+            const float kp2_ur = (idx2 < (int)pKF2->mvuRight.size()) ? pKF2->mvuRight[idx2] : -1.f;
             bool bStereo2 = (!pKF2->mpCamera2 && kp2_ur>=0);
             const bool bRight2 = (pKF2 -> NLeft == -1 || idx2 < pKF2 -> NLeft) ? false
                                                                                : true;
@@ -555,6 +581,10 @@ void LocalMapping::CreateNewMapPoints()
             }
 
             // Check parallax between rays
+            // Safety check: ensure camera pointers are valid
+            if(!pCamera1 || !pCamera2)
+                continue;
+
             Eigen::Vector3f xn1 = pCamera1->unprojectEig(kp1.pt);
             Eigen::Vector3f xn2 = pCamera2->unprojectEig(kp2.pt);
 
@@ -952,58 +982,75 @@ void LocalMapping::KeyFrameCulling()
         for(size_t i=0, iend=vpMapPoints.size(); i<iend; i++)
         {
             MapPoint* pMP = vpMapPoints[i];
-            if(pMP)
+            if(!pMP || pMP->isBad())
+                continue;
+
+            // If stereo, ensure depth vector has this index
+            if(!mbMonocular)
             {
-                if(!pMP->isBad())
-                {
-                    if(!mbMonocular)
-                    {
-                        if(pKF->mvDepth[i]>pKF->mThDepth || pKF->mvDepth[i]<0)
-                            continue;
+                if(i >= pKF->mvDepth.size() || pKF->mvDepth[i]>pKF->mThDepth || pKF->mvDepth[i]<0)
+                    continue;
+            }
+
+            nMPs++;
+            if(pMP->Observations()<=thObs)
+                continue;
+
+            // Compute scale level safely according to NLeft layout
+            int scaleLevel = -1;
+            if(pKF->NLeft == -1){
+                if(i < pKF->mvKeysUn.size()) scaleLevel = pKF->mvKeysUn[i].octave;
+                else continue;
+            } else {
+                if(i < (size_t)pKF->NLeft){
+                    if(i < pKF->mvKeys.size()) scaleLevel = pKF->mvKeys[i].octave;
+                    else continue;
+                } else {
+                    int ridx = (int)i - pKF->NLeft;
+                    if(ridx >= 0 && ridx < (int)pKF->mvKeysRight.size()) scaleLevel = pKF->mvKeysRight[ridx].octave;
+                    else continue;
+                }
+            }
+
+            const map<KeyFrame*, tuple<int,int>> observations = pMP->GetObservations();
+            int nObs=0;
+            for(map<KeyFrame*, tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+            {
+                KeyFrame* pKFi = mit->first;
+                if(!pKFi || pKFi==pKF)
+                    continue;
+
+                tuple<int,int> indexes = mit->second;
+                int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
+                int scaleLeveli = -1;
+
+                if(pKFi->NLeft == -1){
+                    if(leftIndex >= 0 && leftIndex < (int)pKFi->mvKeysUn.size())
+                        scaleLeveli = pKFi->mvKeysUn[leftIndex].octave;
+                } else {
+                    if(leftIndex != -1 && leftIndex < (int)pKFi->mvKeys.size()){
+                        scaleLeveli = pKFi->mvKeys[leftIndex].octave;
                     }
-
-                    nMPs++;
-                    if(pMP->Observations()>thObs)
-                    {
-                        const int &scaleLevel = (pKF -> NLeft == -1) ? pKF->mvKeysUn[i].octave
-                                                                     : (i < pKF -> NLeft) ? pKF -> mvKeys[i].octave
-                                                                                          : pKF -> mvKeysRight[i].octave;
-                        const map<KeyFrame*, tuple<int,int>> observations = pMP->GetObservations();
-                        int nObs=0;
-                        for(map<KeyFrame*, tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
-                        {
-                            KeyFrame* pKFi = mit->first;
-                            if(pKFi==pKF)
-                                continue;
-                            tuple<int,int> indexes = mit->second;
-                            int leftIndex = get<0>(indexes), rightIndex = get<1>(indexes);
-                            int scaleLeveli = -1;
-                            if(pKFi -> NLeft == -1)
-                                scaleLeveli = pKFi->mvKeysUn[leftIndex].octave;
-                            else {
-                                if (leftIndex != -1) {
-                                    scaleLeveli = pKFi->mvKeys[leftIndex].octave;
-                                }
-                                if (rightIndex != -1) {
-                                    int rightLevel = pKFi->mvKeysRight[rightIndex - pKFi->NLeft].octave;
-                                    scaleLeveli = (scaleLeveli == -1 || scaleLeveli > rightLevel) ? rightLevel
-                                                                                                  : scaleLeveli;
-                                }
-                            }
-
-                            if(scaleLeveli<=scaleLevel+1)
-                            {
-                                nObs++;
-                                if(nObs>thObs)
-                                    break;
-                            }
-                        }
-                        if(nObs>thObs)
-                        {
-                            nRedundantObservations++;
+                    if(rightIndex != -1){
+                        int ridx = rightIndex - pKFi->NLeft;
+                        if(ridx >= 0 && ridx < (int)pKFi->mvKeysRight.size()){
+                            int rightLevel = pKFi->mvKeysRight[ridx].octave;
+                            scaleLeveli = (scaleLeveli == -1 || scaleLeveli > rightLevel) ? rightLevel : scaleLeveli;
                         }
                     }
                 }
+
+                if(scaleLeveli != -1 && scaleLeveli <= scaleLevel + 1)
+                {
+                    nObs++;
+                    if(nObs>thObs)
+                        break;
+                }
+            }
+
+            if(nObs>thObs)
+            {
+                nRedundantObservations++;
             }
         }
 
